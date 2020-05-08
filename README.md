@@ -2,6 +2,8 @@
 
 ## 项目描述
 
+[![](https://jitpack.io/v/yizems/SavedDelegate.svg)](https://jitpack.io/#yizems/SavedDelegate)
+
 还在傻傻的写 `onSaveInstanceState` 和 `onRestoreInstanceState` 方法么?
 
 还在为项目中 大量的 未保存和恢复处理的变量 引起的错误 头疼?

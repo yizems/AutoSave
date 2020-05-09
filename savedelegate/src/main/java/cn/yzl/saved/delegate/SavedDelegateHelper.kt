@@ -72,7 +72,7 @@ object SavedDelegateHelper {
         val provider = getOrCreateSavedProvider(obj)
         savedStateRegistry.registerSavedStateProvider(KEY, provider)
     }
-    /** 是否已经注册 */
+
     fun isRegisted(obj: Any) = providers.containsKey(obj.hashCode())
 
     /**
@@ -140,7 +140,7 @@ object SavedDelegateHelper {
                 it.getDelegate(obj) is AbsSavedDelegate<*>
             }
             .forEach {
-                bundleWriter.saveToBundle(bundle, it.name, it.get(obj), it)
+                bundleWriter.saveToBundle(bundle, it.name, it, obj)
             }
         return bundle
     }

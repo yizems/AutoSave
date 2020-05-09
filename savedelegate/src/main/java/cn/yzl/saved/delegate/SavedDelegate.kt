@@ -209,7 +209,7 @@ object SavedDelegates {
      * 可以为null 的代理
      * @return SavedDelegateNullable<T>
      */
-    fun <T> nullable() = SavedDelegateNullable<T>()
+    fun <T> nullable(init: (() -> T)? = null) = SavedDelegateNullable<T>(init)
 
     /**
      * 不为null的代理,需要提供初始化函数

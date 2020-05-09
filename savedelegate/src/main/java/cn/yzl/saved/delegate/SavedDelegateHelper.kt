@@ -66,9 +66,14 @@ object SavedDelegateHelper {
         savedStateRegistry: SavedStateRegistry,
         obj: Any
     ) {
+        if (isRegisted(obj)) {
+            return
+        }
         val provider = getOrCreateSavedProvider(obj)
         savedStateRegistry.registerSavedStateProvider(KEY, provider)
     }
+    /** 是否已经注册 */
+    fun isRegisted(obj: Any) = providers.containsKey(obj.hashCode())
 
     /**
      * 注册

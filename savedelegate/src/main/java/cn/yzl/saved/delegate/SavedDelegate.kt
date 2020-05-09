@@ -57,7 +57,7 @@ abstract class AbsSavedDelegate<T> {
  * @constructor
  */
 @Suppress("UNCHECKED_CAST")
-open class SavedDelegateNullable<T>(
+class SavedDelegateNullable<T>(
     val init: (() -> T)? = null
 ) : AbsSavedDelegate<T>() {
 
@@ -90,7 +90,7 @@ open class SavedDelegateNullable<T>(
  * @constructor
  */
 @Suppress("UNCHECKED_CAST")
-open class SavedDelegateNotNull<T>(
+class SavedDelegateNotNull<T>(
     val init: (() -> T)
 ) : AbsSavedDelegate<T>() {
 
@@ -123,7 +123,7 @@ open class SavedDelegateNotNull<T>(
  *
  * @param T
  */
-open class SavedDelegateLateInit<T>() : AbsSavedDelegate<T>() {
+class SavedDelegateLateInit<T> : AbsSavedDelegate<T>() {
 
     @Throws(java.lang.IllegalStateException::class)
     operator fun getValue(thisRef: Any?, property: KProperty<*>): T {

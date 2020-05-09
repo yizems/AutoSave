@@ -15,9 +15,9 @@
 ```kotlin
 
 //使用 delegate
-var a: Int? by SavedDelegate { 10 }
+var a: Int? by SavedDelegates.nullable { 10 }
 
-var b: IntArray by SavedDelegateNotNull {
+var b: IntArray by SavedDelegates.notNull {
     IntArray(10) { it }
 }
 

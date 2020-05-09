@@ -13,11 +13,20 @@ import kotlin.reflect.full.isSubtypeOf
  * 将值写入到 Bundle 中, 由于值类型不同,需要调用Bundle 的各种put方法
  */
 interface BundleWriter {
+    /**
+     * 保存属性到 bundle
+     *
+     * @param bundle Bundle 需要保存到的bundle
+     * @param name String 属性名字
+     * @param value Any? 属性值
+     * @param property KProperty1<Any, *> 属性反射对象
+     * @param obj Any 属性所在的类实体对象
+     */
     fun saveToBundle(
         bundle: Bundle,
         name: String,
-        value: Any?,
-        property: KProperty1<Any, *>
+        property: KProperty1<Any, *>,
+        obj: Any
     )
 }
 
@@ -29,10 +38,16 @@ open class DefaultBundleWriter : BundleWriter {
     override fun saveToBundle(
         bundle: Bundle,
         name: String,
-        value: Any?,
-        property: KProperty1<Any, *>
+        property: KProperty1<Any, *>,
+        obj: Any
     ) {
-//        bundle.putlist
+
+        //没有初始化的 SavedDelegateLateInit 是不能调用 get方法的,会报异常
+        if (!SavedDelegateLateInit.isInitNoError(obj, property)) {
+            return
+        }
+        val value = property.get(obj)
+
         when (value) {
             is Bundle -> bundle.putBundle(name, value)
             is Byte -> bundle.putByte(name, value)

@@ -56,6 +56,13 @@ SavedDelegateHelper.registerWithLifecycle(lifecycleOwner,savedStateRegistry,acti
 
 ## 更新日志
 
+### 0.0.5
+
+- 提供统一代理方法类`SavedDelegates`
+- 优化代理从 `SavedRegister`中获取bundle后的操作,只读取一次,以前是每次都读取
+- 提供`SavedDelegates.lateInit` 代理,替换`latainit bar`
+
+
 ###  0.0.1
 
 项目初步完成,还没有进行比较全面的测试(数据类型方面)

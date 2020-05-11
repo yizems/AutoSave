@@ -91,12 +91,16 @@ object SavedDelegateHelper {
             savedStateRegistry,
             obj
         )
-        lifecycleOwner.lifecycle.addObserver(LifecycleEventObserver { _, event ->
-            if (event == Lifecycle.Event.ON_DESTROY) {
-                unRegisterSavedProvider(
-                    savedStateRegistry,
-                    obj
-                )
+
+        lifecycleOwner.lifecycle.addObserver(object : LifecycleEventObserver{
+            override fun onStateChanged(source: LifecycleOwner, event: Lifecycle.Event) {
+                if (event == Lifecycle.Event.ON_DESTROY) {
+                    unRegisterSavedProvider(
+                        savedStateRegistry,
+                        obj
+                    )
+                    lifecycleOwner.lifecycle.removeObserver(this)
+                }
             }
         })
     }

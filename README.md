@@ -8,7 +8,9 @@
 
 还在为项目中 大量的 未保存和恢复处理的变量 引起的错误 头疼?
 
-**Just do it!!! you can fly!!!**
+**如果你是使用的ViewModel,请使用SavedHandler 实现自动保存和恢复,官方实现的很好**
+
+**Just do it!!! you will fly!!!**
 
 ## 使用方法
 

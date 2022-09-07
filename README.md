@@ -10,7 +10,6 @@
 
 **如果你是使用的ViewModel,请使用SavedHandler 实现自动保存和恢复,官方实现的很好**
 
-**Just do it!!! you will fly!!!**
 
 ## 使用方法
 

@@ -1,18 +1,18 @@
 /*
 * MIT License
-* 
+*
 * Copyright (c) 2021 yizems
-* 
+*
 * Permission is hereby granted, free of charge, to any person obtaining a copy
 * of this software and associated documentation files (the "Software"), to deal
 * in the Software without restriction, including without limitation the rights
 * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
 * copies of the Software, and to permit persons to whom the Software is
 * furnished to do so, subject to the following conditions:
-* 
+*
 * The above copyright notice and this permission notice shall be included in all
 * copies or substantial portions of the Software.
-* 
+*
 * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -42,7 +42,7 @@ abstract class AbsSavedDelegate<T> {
     protected open var v: T? = null
 
     /**
-     * 从 回复数据中获取该值,如果获取不到,返回 v
+     * 从 恢复数据中获取该值,如果获取不到,返回 v
      * @param owner 属性所在对象
      * @param name String 属性名字
      * @return T?

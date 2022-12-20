@@ -1,10 +1,11 @@
 package cn.yzl.saved.delegate.simple
 
-import android.content.Intent
 import android.os.Bundle
 import android.util.Log
 import androidx.appcompat.app.AppCompatActivity
-import cn.yzl.saved.delegate.*
+import cn.yzl.saved.delegate.SavedDelegateHelper
+import cn.yzl.saved.delegate.SavedDelegateLateInit
+import cn.yzl.saved.delegate.SavedDelegates
 import kotlinx.android.synthetic.main.activity_main.*
 
 class MainActivity : AppCompatActivity() {
@@ -43,9 +44,11 @@ class MainActivity : AppCompatActivity() {
                 sDemo = null
             }
             pDemo2 = PDemo("pDemo2")
-            startActivity(Intent(this, Main2Activity::class.java))
+            MainActivity3.start(this)
         }
+        val startTime = System.currentTimeMillis()
         SavedDelegateHelper.registerSimple(this)
+        log("--registerSimple--" + (System.currentTimeMillis() - startTime))
     }
 
     override fun onResume() {
@@ -75,7 +78,7 @@ class MainActivity : AppCompatActivity() {
 
 
     private fun log(msg: String?) {
-        Log.e("hahaha", msg ?: "NULL")
+        Log.e("MainActivity", msg ?: "NULL")
     }
 
 }

@@ -10,9 +10,10 @@ data class PDemo(
     val boolean: Boolean = false
 ) : Parcelable
 
-class Sdemo : Serializable {
-    var name = "Sdemo"
-    var age = 1
+class Sdemo(
+    var name: String = "",
+    var age: Int = 1,
+) : Serializable {
 
     override fun toString(): String {
         return "Sdemo(name='$name', age=$age)"

@@ -1,3 +1,4 @@
 rootProject.name='SavedDelegate'
 include ':app'
 include ':savedelegate'
+include ':ksp'

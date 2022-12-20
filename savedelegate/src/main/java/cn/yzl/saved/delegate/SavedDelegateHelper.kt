@@ -1,18 +1,18 @@
 /*
 * MIT License
-* 
+*
 * Copyright (c) 2021 yizems
-* 
+*
 * Permission is hereby granted, free of charge, to any person obtaining a copy
 * of this software and associated documentation files (the "Software"), to deal
 * in the Software without restriction, including without limitation the rights
 * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
 * copies of the Software, and to permit persons to whom the Software is
 * furnished to do so, subject to the following conditions:
-* 
+*
 * The above copyright notice and this permission notice shall be included in all
 * copies or substantial portions of the Software.
-* 
+*
 * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -31,6 +31,8 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.LifecycleOwner
 import androidx.savedstate.SavedStateRegistry
+import java.AutoSaveRestore
+import java.lang.reflect.Modifier
 import kotlin.reflect.full.memberProperties
 import kotlin.reflect.jvm.isAccessible
 
@@ -40,6 +42,7 @@ import kotlin.reflect.jvm.isAccessible
  */
 object SavedDelegateHelper {
     const val KEY = "cn.yzl.SavedDelegate"
+
     /**
      * 缓存的 SavedDelegateProvider ,key 为 activity/fragment 的hashcode
      * 当反注册的时候,会自动移除
@@ -86,7 +89,7 @@ object SavedDelegateHelper {
      * @param savedStateRegistry SavedStateRegistry
      * @param obj Any
      */
-    fun registerSavedProvider(
+    private fun registerSavedProvider(
         savedStateRegistry: SavedStateRegistry,
         obj: Any
     ) {
@@ -97,7 +100,7 @@ object SavedDelegateHelper {
         savedStateRegistry.registerSavedStateProvider(KEY, provider)
     }
 
-    fun isRegisted(obj: Any) = providers.containsKey(obj.hashCode())
+    private fun isRegisted(obj: Any) = providers.containsKey(obj.hashCode())
 
     /**
      * 注册
@@ -106,7 +109,7 @@ object SavedDelegateHelper {
      * @param savedStateRegistry SavedStateRegistry
      * @param obj Any
      */
-    fun registerWithLifecycle(
+    private fun registerWithLifecycle(
         lifecycleOwner: LifecycleOwner,
         savedStateRegistry: SavedStateRegistry,
         obj: Any
@@ -116,7 +119,7 @@ object SavedDelegateHelper {
             obj
         )
 
-        lifecycleOwner.lifecycle.addObserver(object : LifecycleEventObserver{
+        lifecycleOwner.lifecycle.addObserver(object : LifecycleEventObserver {
             override fun onStateChanged(source: LifecycleOwner, event: Lifecycle.Event) {
                 if (event == Lifecycle.Event.ON_DESTROY) {
                     unRegisterSavedProvider(
@@ -134,7 +137,7 @@ object SavedDelegateHelper {
      * @param obj Any
      * @return SavedDelegateProvider
      */
-    fun getOrCreateSavedProvider(obj: Any): SavedDelegateProvider {
+    internal fun getOrCreateSavedProvider(obj: Any): SavedDelegateProvider {
         var provider = providers[obj.hashCode()]
         if (provider != null) {
             return provider
@@ -149,7 +152,7 @@ object SavedDelegateHelper {
      * @param savedStateRegistry SavedStateRegistry
      * @param obj 一般指 Activity 或者 Fragment
      */
-    fun unRegisterSavedProvider(savedStateRegistry: SavedStateRegistry, obj: Any) {
+    internal fun unRegisterSavedProvider(savedStateRegistry: SavedStateRegistry, obj: Any) {
         providers.remove(obj.hashCode())
         savedStateRegistry.unregisterSavedStateProvider(KEY)
     }
@@ -161,15 +164,99 @@ object SavedDelegateHelper {
      * @return Bundle
      */
     internal fun saveProperties(obj: Any): Bundle {
+//        val startTime = System.currentTimeMillis()
+
         val bundle = Bundle()
-        obj.javaClass.kotlin.memberProperties
-            .filter {
-                it.isAccessible = true
-                it.getDelegate(obj) is AbsSavedDelegate<*>
+
+        // for kotlin
+        if (isKtClass(obj)) {
+            obj.javaClass.kotlin.memberProperties
+                .filter {
+                    it.isAccessible = true
+                    it.getDelegate(obj) is AbsSavedDelegate<*>
+                }
+                .forEach {
+                    bundleWriter.saveToBundle(bundle, it.name, it, obj)
+                }
+        } else {
+            //for java
+            obj.javaClass.kotlin.memberProperties.filter { property ->
+                property.annotations.any { it is AutoSaveRestore }
+            }.forEach { property ->
+                val annotation = property.annotations.filterIsInstance<AutoSaveRestore>()
+                    .firstOrNull() ?: return@forEach
+
+                try {
+                    val keyName = annotation.value.ifBlank {
+                        property.name
+                    }
+                    bundleWriter.saveToBundle(bundle, keyName, property, obj)
+                } catch (e: IllegalArgumentException) {
+                    e.printStackTrace()
+                    if (!annotation.ignoreInvalidType) {
+                        throw e
+                    }
+                }
+
             }
-            .forEach {
-                bundleWriter.saveToBundle(bundle, it.name, it, obj)
-            }
+        }
+//        Log.e("MainActivity", "saveProperties cost time: ${System.currentTimeMillis() - startTime}")
         return bundle
     }
+
+    @JvmStatic
+    fun registerForJava(act: ComponentActivity) {
+        registerSimple(act)
+        restoreFieldForJava(act, act.savedStateRegistry, act.intent.extras)
+    }
+
+    @JvmStatic
+    fun registerForJava(frg: Fragment) {
+        registerSimple(frg)
+        restoreFieldForJava(frg, frg.savedStateRegistry, frg.arguments)
+    }
+
+    private fun restoreFieldForJava(
+        obj: Any,
+        savedStateRegistry: SavedStateRegistry,
+        startBundle: Bundle?
+    ) {
+        val provider = getOrCreateSavedProvider(obj)
+        val restoreBundle = provider.getSavedBundle(savedStateRegistry)
+
+        obj.javaClass.declaredFields
+            .filterNot { Modifier.isFinal(it.modifiers) || Modifier.isStatic(it.modifiers) }
+            .filter { field ->
+                field.annotations.any { it is AutoSaveRestore }
+            }.forEach { field ->
+                val annotation = field.annotations.filterIsInstance<AutoSaveRestore>()
+                    .firstOrNull() ?: return@forEach
+
+                val keyName = annotation.value.ifBlank {
+                    field.name
+                }
+                val value = restoreBundle?.get(keyName) ?: startBundle?.get(keyName)
+                if (value != null) {
+                    field.isAccessible = true
+                    field.set(obj, value)
+                }
+            }
+    }
+
+    /**
+     * 判断一个文件是不是kotlin类型
+     * 利用 kotlin 编译后有 kotlin.metaData 注解
+     *
+     * @return ture kotlin, false java
+     */
+    private fun isKtClass(`object`: Any): Boolean {
+        val annotations = `object`.javaClass.annotations
+        for (i in annotations.indices) {
+            if (annotations[i].toString().contains("kotlin")) {
+                return true
+            }
+        }
+        return false
+    }
+
 }

@@ -12,7 +12,7 @@
 
 
 ## 使用方法
-
+- kotlin
 ```kotlin
 
 //使用 delegate
@@ -28,9 +28,22 @@ SavedDelegateHelper.registerSimple(activity)
 SavedDelegateHelper.registerSimple(fragment)
 
 //或
-SavedDelegateHelper.registerSavedProvider(savedStateRegistry,activity/fragment)
+SavedDelegateHelper.registerSavedProvider(savedStateRegistry, activity / fragment)
 //或
-SavedDelegateHelper.registerWithLifecycle(lifecycleOwner,savedStateRegistry,activity/fragment)
+SavedDelegateHelper.registerWithLifecycle(lifecycleOwner, savedStateRegistry, activity / fragment)
+```
+
+-java
+
+```java
+@AutoSaveRestore
+private int a=0;
+
+@AutoSaveRestore
+private String b=0;
+
+//在Activity.onCreate方法中
+        SavedDelegateHelper.registerForJava()
 ```
 
 然后,你的这些变量,在页面被销毁时,就会被自动恢复了!!

@@ -2,11 +2,11 @@
 apply from: 'maven.gradle'
 buildscript {
     apply from: 'maven.gradle'
-    ext.kotlin_version = '1.7.20'
+    ext.kotlin_version = '1.6.21'
     dependencies {
         classpath 'com.android.tools.build:gradle:4.2.2'
         classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
-        classpath "com.google.devtools.ksp:symbol-processing-gradle-plugin:1.7.0-1.0.6"
+        classpath "com.google.devtools.ksp:symbol-processing-gradle-plugin:1.6.21-1.0.6"
         // NOTE: Do not place your application dependencies here; they belong
         // in the individual module build.gradle files
     }

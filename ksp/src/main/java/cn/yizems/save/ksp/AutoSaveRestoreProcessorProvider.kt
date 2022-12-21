@@ -10,7 +10,9 @@ import com.google.devtools.ksp.symbol.FileLocation
 import com.google.devtools.ksp.symbol.KSAnnotated
 import com.google.devtools.ksp.symbol.KSClassDeclaration
 import com.google.devtools.ksp.symbol.KSPropertyDeclaration
+import com.google.devtools.ksp.symbol.impl.kotlin.KSPropertyDeclarationImpl
 import com.google.devtools.ksp.validate
+import org.jetbrains.kotlin.cfg.getDeclarationDescriptorIncludingConstructors
 
 class AutoSaveRestoreProcessorProvider : SymbolProcessorProvider {
     override fun create(environment: SymbolProcessorEnvironment): SymbolProcessor {
@@ -156,10 +158,12 @@ private class AutoSaveRestoreSymbolProcessor(
         }
         ktClass.forEach { clz ->
             clz.getDeclaredProperties()
-                .forEach { propertyDeclared ->
-                    // get KSPropertyDeclaration 的 delegate
-                    logger.warn("delegate:${propertyDeclared}", propertyDeclared)
-                    logger.warn("delegate:${propertyDeclared.isDelegated()}", propertyDeclared)
+                .map { it as KSPropertyDeclarationImpl }
+                .filter { propertyDeclared ->
+                    propertyDeclared.ktDeclaration.text.contains("SavedDelegates")
+                }.forEach {
+                    // 开始判定类型
+                    // 如果不是Bundle支持的类型,直接报错
                 }
         }
     }

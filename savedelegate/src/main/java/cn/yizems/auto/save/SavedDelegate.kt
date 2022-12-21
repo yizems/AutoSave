@@ -1,45 +1,20 @@
-/*
-* MIT License
-*
-* Copyright (c) 2021 yizems
-*
-* Permission is hereby granted, free of charge, to any person obtaining a copy
-* of this software and associated documentation files (the "Software"), to deal
-* in the Software without restriction, including without limitation the rights
-* to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-* copies of the Software, and to permit persons to whom the Software is
-* furnished to do so, subject to the following conditions:
-*
-* The above copyright notice and this permission notice shall be included in all
-* copies or substantial portions of the Software.
-*
-* THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-* IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-* FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-* AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-* LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-* OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-* SOFTWARE.
-*/
+package cn.yizems.auto.save
 
-package cn.yzl.saved.delegate
-
+import android.os.Bundle
 import androidx.savedstate.SavedStateRegistryOwner
-import kotlin.reflect.KMutableProperty0
 import kotlin.reflect.KProperty
-import kotlin.reflect.KProperty1
-import kotlin.reflect.jvm.isAccessible
 
 /**
  * 抽象的 SavedDelegate
  * @property v 保存的数据
- * @property savedStateRegistryOwner SavedStateRegistryOwner
  * @constructor
  */
 @Suppress("UNCHECKED_CAST")
 abstract class AbsSavedDelegate<T> {
 
     protected open var v: T? = null
+
+    protected var propertyName: String? = null
 
     /**
      * 从 恢复数据中获取该值,如果获取不到,返回 v
@@ -55,8 +30,8 @@ abstract class AbsSavedDelegate<T> {
         if (owner !is SavedStateRegistryOwner) {
             throw IllegalArgumentException("宿主不是[SavedStateRegistryOwner]的实现类:::${if (owner == null) "NULL" else owner::class.qualifiedName}")
         }
-        val bundle = SavedDelegateHelper.getOrCreateSavedProvider(owner)
-            .getSavedBundle(owner.savedStateRegistry) ?: return
+        val bundle = SavedDelegateHelper.getProvider(owner)
+            ?.getSavedBundle(owner.savedStateRegistry) ?: return
 
         if (!bundle.containsKey(name)) {
             return
@@ -70,6 +45,26 @@ abstract class AbsSavedDelegate<T> {
         } else {
             temp as T
         }
+    }
+
+    /**
+     * 可重复调用,但是只会执行一次,
+     * 在 kotlin 代理方法的 get set 中均调用一次
+     */
+    fun register2Provider(owner: Any?, propertyName: String) {
+        if (owner !is SavedStateRegistryOwner) {
+            throw IllegalArgumentException("宿主不是[SavedStateRegistryOwner]的实现类:::${if (owner == null) "NULL" else owner::class.qualifiedName}")
+        }
+
+        SavedDelegateHelper.registerWithLifecycle(owner, owner.savedStateRegistry, owner)
+        val provider = SavedDelegateHelper.getProvider(owner) ?: return
+        this.propertyName = propertyName
+        provider.addDelegate(this)
+    }
+
+    open fun save2Bundle(bundle: Bundle) {
+        propertyName ?: return // 如果为null,为没有使用过, 即没有读取过,也没有写入过,不需要保存
+        BundleWriter.saveToBundle(bundle, propertyName!!, v)
     }
 }
 
@@ -88,14 +83,16 @@ class SavedDelegateNullable<T>(
     /** 是否已经初始化 */
     private var isInit = false
 
-    open operator fun setValue(thisRef: Any?, property: KProperty<*>, value: T?) {
+    operator fun setValue(thisRef: Any?, property: KProperty<*>, value: T?) {
         this.v = value
+        register2Provider(thisRef, property.name)
     }
 
-    open operator fun getValue(thisRef: Any?, property: KProperty<*>): T? {
+    operator fun getValue(thisRef: Any?, property: KProperty<*>): T? {
         if (!isInit) {
             initV()
         }
+        register2Provider(thisRef, property.name)
         readValueFromBundle(thisRef, property.name)
         return v
     }
@@ -120,18 +117,20 @@ class SavedDelegateNotNull<T>(
 
     private var isInit = false
 
-    open operator fun setValue(thisRef: Any?, property: KProperty<*>, value: T) {
+    operator fun setValue(thisRef: Any?, property: KProperty<*>, value: T) {
         this.v = value
+        register2Provider(thisRef, property.name)
     }
 
     @Throws(IllegalArgumentException::class)
-    open operator fun getValue(thisRef: Any?, property: KProperty<*>): T {
+    operator fun getValue(thisRef: Any?, property: KProperty<*>): T {
         if (!isInit) {
             initV()
         }
         if (thisRef !is SavedStateRegistryOwner) {
             throw IllegalArgumentException("宿主不是[SavedStateRegistryOwner]的实现类:::${if (thisRef == null) "NULL" else thisRef::class.qualifiedName}")
         }
+        register2Provider(thisRef, property.name)
         readValueFromBundle(thisRef, property.name)
         return v!!
     }
@@ -139,6 +138,13 @@ class SavedDelegateNotNull<T>(
     private fun initV() {
         v = init.invoke()
         isInit = true
+    }
+
+    override fun save2Bundle(bundle: Bundle) {
+        if (!isInit || propertyName == null || v == null) {
+            return
+        }
+        super.save2Bundle(bundle)
     }
 }
 
@@ -151,6 +157,7 @@ class SavedDelegateLateInit<T> : AbsSavedDelegate<T>() {
 
     @Throws(java.lang.IllegalStateException::class)
     operator fun getValue(thisRef: Any?, property: KProperty<*>): T {
+        register2Provider(thisRef, property.name)
         readValueFromBundle(thisRef, property.name)
         if (v == null) {
             throw IllegalStateException("the property (${property.name}) can not be null,do you forget init it?")
@@ -160,68 +167,19 @@ class SavedDelegateLateInit<T> : AbsSavedDelegate<T>() {
 
     operator fun setValue(thisRef: Any?, property: KProperty<*>, value: T) {
         v = value
+        register2Provider(thisRef, property.name)
     }
-
 
     fun isInit(owner: Any, property: KProperty<*>): Boolean {
         readValueFromBundle(owner, property.name)
         return v != null
     }
 
-
-    companion object {
-
-        /**
-         * 是否已经初始化
-         * @param delegate Any
-         * @return Boolean
-         */
-        fun isInit(owner: Any, property: KMutableProperty0<Any>): Boolean {
-            property.isAccessible = true
-            val delegate = property.getDelegate()
-            if (delegate is SavedDelegateLateInit<*>) {
-                return delegate.isInit(owner, property)
-            } else {
-                throw java.lang.IllegalArgumentException("必须接受")
-            }
+    override fun save2Bundle(bundle: Bundle) {
+        if (propertyName == null || v == null) {
+            return
         }
-
-        fun isInit(owner: Any, property: KProperty1<Any, *>): Boolean {
-            property.isAccessible = true
-            val delegate = property.getDelegate(owner)
-            if (delegate is SavedDelegateLateInit<*>) {
-                return delegate.isInit(owner, property)
-            } else {
-                throw java.lang.IllegalArgumentException("必须接受")
-            }
-        }
-
-        /**
-         * 是否已经初始化
-         * 不会报错,非 [SavedDelegateLateInit] 类型,会返回 true
-         * @param delegate Any
-         * @return Boolean
-         */
-        fun isInitNoError(owner: Any, property: KMutableProperty0<*>): Boolean {
-            property.isAccessible = true
-            val delegate = property.getDelegate()
-            if (delegate is SavedDelegateLateInit<*>) {
-                property.getDelegate()
-                return delegate.isInit(owner, property)
-            } else {
-                return true
-            }
-        }
-
-        fun isInitNoError(owner: Any, property: KProperty1<Any, *>): Boolean {
-            property.isAccessible = true
-            val delegate = property.getDelegate(owner)
-            if (delegate is SavedDelegateLateInit<*>) {
-                return delegate.isInit(owner, property)
-            } else {
-                return true
-            }
-        }
+        BundleWriter.saveToBundle(bundle, propertyName!!, v)
     }
 }
 

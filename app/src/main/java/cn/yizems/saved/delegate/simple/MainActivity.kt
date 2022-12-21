@@ -1,14 +1,14 @@
-package cn.yzl.saved.delegate.simple
+package cn.yizems.saved.delegate.simple
 
 import android.os.Bundle
+import android.os.Parcelable
+import android.text.SpannableStringBuilder
 import android.util.Log
 import androidx.appcompat.app.AppCompatActivity
-import cn.yzl.saved.delegate.SavedDelegateHelper
-import cn.yzl.saved.delegate.SavedDelegateLateInit
-import cn.yzl.saved.delegate.SavedDelegates
+import cn.yizems.auto.save.SavedDelegates
 import kotlinx.android.synthetic.main.activity_main.*
 
-class MainActivity : AppCompatActivity() {
+open class MainActivity : AppCompatActivity() {
 
     var a: Int? by SavedDelegates.nullable { 10 }
 
@@ -21,9 +21,10 @@ class MainActivity : AppCompatActivity() {
     }
 
     var pDemo by SavedDelegates.notNull { PDemo() }
+
     var sDemo by SavedDelegates.nullable { Sdemo() }
 
-    var pDemo2 by SavedDelegates.lateInit<PDemo>()
+    private var pDemo2 by SavedDelegates.lateInit<PDemo>()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -46,8 +47,10 @@ class MainActivity : AppCompatActivity() {
             pDemo2 = PDemo("pDemo2")
             MainActivity3.start(this)
         }
+        if (savedInstanceState == null) {
+            pDemo2 = PDemo("pDemo22")
+        }
         val startTime = System.currentTimeMillis()
-        SavedDelegateHelper.registerSimple(this)
         log("--registerSimple--" + (System.currentTimeMillis() - startTime))
     }
 
@@ -63,17 +66,11 @@ class MainActivity : AppCompatActivity() {
         if (sDemo != null) {
             log(System.identityHashCode(sDemo).toString())
         }
-        if (SavedDelegateLateInit.isInitNoError(
-                this,
-                this::pDemo2
-            )
-        ) {
-            log(pDemo2.toString())
-        } else {
-            log("pDemo2 is not init")
-        }
+        log(pDemo2.toString())
 
         log("----")
+        val arry = arrayOf<Parcelable>()
+        Bundle().putCharSequence("key", SpannableStringBuilder())
     }
 
 

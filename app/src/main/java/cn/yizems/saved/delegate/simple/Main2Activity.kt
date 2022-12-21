@@ -1,7 +1,7 @@
-package cn.yzl.saved.delegate.simple
+package cn.yizems.saved.delegate.simple
 
-import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
+import androidx.appcompat.app.AppCompatActivity
 
 class Main2Activity : AppCompatActivity() {
 

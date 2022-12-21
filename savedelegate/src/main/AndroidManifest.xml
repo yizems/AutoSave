@@ -1,2 +1,1 @@
-<manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="cn.yzl.saved.delegate" />
+<manifest package="cn.yizems.saved.delegate" />

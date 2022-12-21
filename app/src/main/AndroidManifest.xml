@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="cn.yzl.saved.delegate.simple">
+    package="cn.yizems.saved.delegate.simple">
 
     <application
         android:allowBackup="true"
@@ -9,15 +9,15 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
-        <activity android:name=".Main2Activity"></activity>
-        <activity android:name=".MainActivity">
+        <activity android:name="cn.yizems.saved.delegate.simple.Main2Activity"></activity>
+        <activity android:name="cn.yizems.saved.delegate.simple.MainActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <activity android:name=".MainActivity3" />
+        <activity android:name="cn.yizems.saved.delegate.simple.MainActivity3" />
     </application>
 
 </manifest>

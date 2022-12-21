@@ -1,4 +1,4 @@
-package cn.yzl.saved.delegate.simple
+package cn.yizems.saved.delegate.simple
 
 import android.os.Parcelable
 import kotlinx.android.parcel.Parcelize

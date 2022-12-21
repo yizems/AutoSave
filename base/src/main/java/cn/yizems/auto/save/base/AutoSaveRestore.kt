@@ -5,7 +5,7 @@ package cn.yizems.auto.save.base
  * 如果加在类上，表示该类的所有字段都会被自动保存和恢复
  */
 @kotlin.annotation.Retention(AnnotationRetention.RUNTIME)
-@Target(AnnotationTarget.FIELD)
+@Target(AnnotationTarget.FIELD, AnnotationTarget.CLASS)
 annotation class AutoSaveRestore(
     /**
      * 字段名

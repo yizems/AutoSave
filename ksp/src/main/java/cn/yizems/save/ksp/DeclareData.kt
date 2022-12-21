@@ -13,7 +13,7 @@ class DeclareData(
     private lateinit var bundleType: BundleSupportType
 
     val isJava by lazy {
-        (parent.location as? FileLocation)?.filePath?.endsWith(".java") ?: false
+        parent.location.isJava()
     }
 
     fun resolveBundleType(logger: KSPLogger) {

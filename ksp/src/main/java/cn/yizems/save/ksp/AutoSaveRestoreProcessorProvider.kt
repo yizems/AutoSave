@@ -1,10 +1,12 @@
 package cn.yizems.save.ksp
 
 import cn.yizems.auto.save.base.AutoSaveRestore
+import com.google.devtools.ksp.getDeclaredProperties
 import com.google.devtools.ksp.processing.Resolver
 import com.google.devtools.ksp.processing.SymbolProcessor
 import com.google.devtools.ksp.processing.SymbolProcessorEnvironment
 import com.google.devtools.ksp.processing.SymbolProcessorProvider
+import com.google.devtools.ksp.symbol.FileLocation
 import com.google.devtools.ksp.symbol.KSAnnotated
 import com.google.devtools.ksp.symbol.KSClassDeclaration
 import com.google.devtools.ksp.symbol.KSPropertyDeclaration
@@ -34,9 +36,11 @@ private class AutoSaveRestoreSymbolProcessor(
 
         val declareDatas = mutableListOf<DeclareData>()
 
+        //AutoSaveRestore 在类上只能用于Kotlin类 等等
+        checkKotlin(symbols)
 
         // 检查注解合法性
-        symbols.forEach {
+        symbols.filterNot { it is KSClassDeclaration }.forEach {
             if (it !is KSPropertyDeclaration) {
                 logger.error(
                     "@AutoSaveRestore can't be applied to $it: must be a member property or field",
@@ -129,6 +133,35 @@ private class AutoSaveRestoreSymbolProcessor(
 //            }
 //        }
         return noHandleList
+    }
+
+    private fun checkKotlin(symbols: Sequence<KSAnnotated>) {
+        logger.warn("--------------checkKotlin")
+        // AutoSaveRestore 不能在 kotlin 的属性上使用
+        symbols.filterIsInstance<KSPropertyDeclaration>()
+            .forEach {
+                if (it.location.isKotlin()) {
+                    logger.error("AutoSaveRestore can not be used on kotlin property", it)
+                    throw IllegalArgumentException("AutoSaveRestore can not be used on kotlin property")
+                }
+            }
+
+        val ktClass = symbols.filterIsInstance<KSClassDeclaration>()
+        // AutoSaveRestore 在类上只能用于Kotlin类
+        ktClass.forEach {
+            if (!it.location.isKotlin()) {
+                logger.error("AutoSaveRestore can only be used on kotlin class", it)
+                throw IllegalArgumentException("AutoSaveRestore can only be used on Kotlin class")
+            }
+        }
+        ktClass.forEach { clz ->
+            clz.getDeclaredProperties()
+                .forEach { propertyDeclared ->
+                    // get KSPropertyDeclaration 的 delegate
+                    logger.warn("delegate:${propertyDeclared}", propertyDeclared)
+                    logger.warn("delegate:${propertyDeclared.isDelegated()}", propertyDeclared)
+                }
+        }
     }
 
 //    private fun adapterGenerator(

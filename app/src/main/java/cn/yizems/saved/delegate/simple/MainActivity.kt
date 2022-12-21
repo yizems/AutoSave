@@ -6,8 +6,10 @@ import android.text.SpannableStringBuilder
 import android.util.Log
 import androidx.appcompat.app.AppCompatActivity
 import cn.yizems.auto.save.SavedDelegates
+import cn.yizems.auto.save.base.AutoSaveRestore
 import kotlinx.android.synthetic.main.activity_main.*
 
+@AutoSaveRestore
 open class MainActivity : AppCompatActivity() {
 
     var a: Int? by SavedDelegates.nullable { 10 }

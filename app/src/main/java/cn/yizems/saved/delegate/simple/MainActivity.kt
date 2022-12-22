@@ -28,6 +28,14 @@ open class MainActivity : AppCompatActivity() {
 
     private var pDemo2 by SavedDelegates.lateInit<PDemo>()
 
+    //region test ksp error check
+
+//    private var error1 by SavedDelegates.lateInit<Any>()
+//    private var error2 by SavedDelegates.lateInit<ArrayList<Any>>()
+
+    //endregion
+
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)

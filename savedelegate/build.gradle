@@ -1,5 +1,7 @@
 apply plugin: 'com.android.library'
 apply plugin: 'kotlin-android'
+apply plugin: 'com.vanniktech.maven.publish'
+
 
 android {
     compileSdkVersion 29
@@ -28,12 +30,3 @@ dependencies {
     api project(":base")
 }
 
-/*
-ext {
-    publishedGroup = "xxx"
-    artifactName = "xxx"
-    version = android.defaultConfig.versionName
-}
-
-apply from: rootProject.file('upload.gradle')
-*/

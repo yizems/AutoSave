@@ -6,13 +6,11 @@ import com.google.devtools.ksp.processing.Resolver
 import com.google.devtools.ksp.processing.SymbolProcessor
 import com.google.devtools.ksp.processing.SymbolProcessorEnvironment
 import com.google.devtools.ksp.processing.SymbolProcessorProvider
-import com.google.devtools.ksp.symbol.FileLocation
 import com.google.devtools.ksp.symbol.KSAnnotated
 import com.google.devtools.ksp.symbol.KSClassDeclaration
 import com.google.devtools.ksp.symbol.KSPropertyDeclaration
 import com.google.devtools.ksp.symbol.impl.kotlin.KSPropertyDeclarationImpl
 import com.google.devtools.ksp.validate
-import org.jetbrains.kotlin.cfg.getDeclarationDescriptorIncludingConstructors
 
 class AutoSaveRestoreProcessorProvider : SymbolProcessorProvider {
     override fun create(environment: SymbolProcessorEnvironment): SymbolProcessor {
@@ -28,7 +26,7 @@ private class AutoSaveRestoreSymbolProcessor(
         val AUTO_SAVE_RESTORE_CLASS_NAME = AutoSaveRestore::class.qualifiedName!!
     }
 
-    private val codeGenerator = environment.codeGenerator
+    //    private val codeGenerator = environment.codeGenerator
     private val logger = environment.logger
 
     override fun process(resolver: Resolver): List<KSAnnotated> {
@@ -36,10 +34,68 @@ private class AutoSaveRestoreSymbolProcessor(
 
         val noHandleList = symbols.filter { !it.validate() }.toList()
 
-        val declareDatas = mutableListOf<DeclareData>()
 
-        //AutoSaveRestore 在类上只能用于Kotlin类 等等
-        checkKotlin(symbols)
+        handleKotlin(symbols)
+
+        handleJava(symbols)
+
+        return noHandleList
+    }
+
+    /**
+     * 处理kotlin 中使用使用
+     * 1. 检查 kotlin 类中使用是否规范
+     */
+    private fun handleKotlin(symbols: Sequence<KSAnnotated>) {
+        logger.warn("--------------checkKotlin")
+        // AutoSaveRestore 不能在 kotlin 的属性上使用
+        symbols.filterIsInstance<KSPropertyDeclaration>()
+            .forEach {
+                if (it.location.isKotlin()) {
+                    logger.error("AutoSaveRestore can not be used on kotlin property", it)
+                    throw IllegalArgumentException("AutoSaveRestore can not be used on kotlin property")
+                }
+            }
+
+        val ktClass = symbols.filterIsInstance<KSClassDeclaration>()
+        // AutoSaveRestore 在类上只能用于Kotlin类
+        ktClass.forEach {
+            if (!it.location.isKotlin()) {
+                logger.error("AutoSaveRestore can only be used on kotlin class", it)
+                throw IllegalArgumentException("AutoSaveRestore can only be used on Kotlin class")
+            }
+        }
+        ktClass.forEach { clz ->
+            clz.getDeclaredProperties()
+                .map { it as KSPropertyDeclarationImpl }
+                .filter { propertyDeclared ->
+                    propertyDeclared.ktDeclaration.text.contains("SavedDelegates.")
+                }.forEach { propertyDeclared ->
+                    // 开始判定类型
+                    // 如果不是Bundle支持的类型,直接报错
+                    val bundleType =
+                        BundleSupportType.values()
+                            .firstOrNull { it.checkSupport(propertyDeclared.type) }
+                    logger.warn(
+                        "${propertyDeclared.type},bundleType:$bundleType, ${propertyDeclared.simpleName.asString()}",
+                        propertyDeclared
+                    )
+                    if (bundleType == null) {
+                        logger.error(
+                            "AutoSaveRestore can not be used on ${propertyDeclared.simpleName.asString()}, because ${propertyDeclared.type.resolve()} is not supported by Bundle",
+                            propertyDeclared
+                        )
+                        return
+                    }
+                }
+        }
+    }
+
+    /**
+     * 处理Java类中的使用
+     */
+    private fun handleJava(symbols: Sequence<KSAnnotated>) {
+        val declareDatas = mutableListOf<DeclareData>()
 
         // 检查注解合法性
         symbols.filterNot { it is KSClassDeclaration }.forEach {
@@ -82,10 +138,6 @@ private class AutoSaveRestoreSymbolProcessor(
                 throw IllegalArgumentException("@AutoSaveRestore can't be applied to $it: must not CompanionObject")
             }
 
-//            logger.warn("location:${it.location}", it)
-//            logger.warn("type:${it.type.resolve().declaration}", it)
-//            logger.warn("parent:${parent}", it)
-
             declareDatas.add(
                 DeclareData(
                     parent, it,
@@ -94,78 +146,12 @@ private class AutoSaveRestoreSymbolProcessor(
             )
         }
 
-        val grouping = declareDatas.groupBy { it.parent }
-
-        grouping.forEach {
-            logger.warn("parent:${it.key},size:${it.value.size}", it.key)
-            // 生成代码
+//        val grouping = declareDatas.groupBy { it.parent }
 
 
-        }
-
-
-//        for (type in resolver.getSymbolsWithAnnotation(AUTO_SAVE_RESTORE_CLASS_NAME)) {
-//            // For the smart cast
-//            if (type !is KSPropertyDeclaration) {
-//                logger.error(
-//                    "@AutoSaveRestore can't be applied to $type: must be a member property or field",
-//                    type
-//                )
-//                continue
-//            }
-//
-//            val originatingFile = type.containingFile!!
-//            val adapterGenerator = adapterGenerator(logger, resolver, type) ?: return emptyList()
-//            try {
-//                val preparedAdapter = adapterGenerator
-//                    .prepare(generateProguardRules) { spec ->
-//                        spec.toBuilder()
-//                            .apply {
-//                                generatedAnnotation?.let(::addAnnotation)
-//                            }
-//                            .addOriginatingKSFile(originatingFile)
-//                            .build()
-//                    }
-//                preparedAdapter.spec.writeTo(codeGenerator, aggregating = false)
-//                preparedAdapter.proguardConfig?.writeTo(codeGenerator, originatingFile)
-//            } catch (e: Exception) {
-//                logger.error(
-//                    "Error preparing ${type.simpleName.asString()}: ${e.stackTrace.joinToString("\n")}"
-//                )
-//            }
+//        grouping.forEach {
+//            logger.warn("parent:${it.key},size:${it.value.size}", it.key)
 //        }
-        return noHandleList
-    }
-
-    private fun checkKotlin(symbols: Sequence<KSAnnotated>) {
-        logger.warn("--------------checkKotlin")
-        // AutoSaveRestore 不能在 kotlin 的属性上使用
-        symbols.filterIsInstance<KSPropertyDeclaration>()
-            .forEach {
-                if (it.location.isKotlin()) {
-                    logger.error("AutoSaveRestore can not be used on kotlin property", it)
-                    throw IllegalArgumentException("AutoSaveRestore can not be used on kotlin property")
-                }
-            }
-
-        val ktClass = symbols.filterIsInstance<KSClassDeclaration>()
-        // AutoSaveRestore 在类上只能用于Kotlin类
-        ktClass.forEach {
-            if (!it.location.isKotlin()) {
-                logger.error("AutoSaveRestore can only be used on kotlin class", it)
-                throw IllegalArgumentException("AutoSaveRestore can only be used on Kotlin class")
-            }
-        }
-        ktClass.forEach { clz ->
-            clz.getDeclaredProperties()
-                .map { it as KSPropertyDeclarationImpl }
-                .filter { propertyDeclared ->
-                    propertyDeclared.ktDeclaration.text.contains("SavedDelegates")
-                }.forEach {
-                    // 开始判定类型
-                    // 如果不是Bundle支持的类型,直接报错
-                }
-        }
     }
 
 //    private fun adapterGenerator(

@@ -1,7 +1,6 @@
 package cn.yizems.save.ksp
 
 import com.google.devtools.ksp.processing.KSPLogger
-import com.google.devtools.ksp.symbol.FileLocation
 import com.google.devtools.ksp.symbol.KSClassDeclaration
 import com.google.devtools.ksp.symbol.KSPropertyDeclaration
 
@@ -20,7 +19,7 @@ class DeclareData(
         bundleType =
             BundleSupportType.values()
                 .firstOrNull {
-                    it.checkSupport(property)
+                    it.checkSupport(property.type)
                 }.let {
                     if (it == null) {
                         logger.error(

@@ -1,17 +1,58 @@
-rootProject.buildscript.repositories {
-    maven { url 'http://maven.aliyun.com/nexus/content/groups/public/' }
-    maven { url 'https://jitpack.io' }
-    google()
-    jcenter()
-
+rootProject.buildscript {
+    dependencies {
+        classpath 'com.vanniktech:gradle-maven-publish-plugin:0.18.0'
+    }
 }
+def addMaven(String repoName, String mavenPath, String mavenPathSnapshot, String mavenUser, String mavenPwd) {
 
-rootProject.allprojects {
-    repositories {
-        maven { url 'http://maven.aliyun.com/nexus/content/groups/public/' }
-        maven { url 'https://jitpack.io' }
-        google()
-        jcenter()
 
+    rootProject.buildscript.repositories {
+        maven {
+            url mavenPath
+            if (mavenUser != null || !mavenUser.isBlank()) {
+                credentials {
+                    username mavenUser
+                    password mavenPwd
+                }
+            }
+        }
+    }
+
+    rootProject.subprojects {
+        repositories {
+            maven {
+                url mavenPath
+                if (mavenUser != null || !mavenUser.isBlank()) {
+                    credentials {
+                        username mavenUser
+                        password mavenPwd
+                    }
+                }
+            }
+        }
+
+        if (plugins.hasPlugin('com.android.application')) {
+            return
+        }
+
+        plugins.withId("com.vanniktech.maven.publish") {
+            publishing {
+                repositories {
+                    maven {
+                        name = repoName
+                        def releasesRepoUrl = mavenPath
+                        def snapshotsRepoUrl = mavenPathSnapshot == null || mavenPathSnapshot.isBlank() ? mavenPath : mavenPathSnapshot
+                        url = version.endsWith('SNAPSHOT') ? snapshotsRepoUrl : releasesRepoUrl
+                        if (mavenUser != null || !mavenUser.isBlank()) {
+                            credentials {
+                                username mavenUser
+                                password mavenPwd
+                            }
+                        }
+                    }
+                }
+            }
+
+        }
     }
 }

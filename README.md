@@ -2,7 +2,7 @@
 
 ## 项目描述
 
-[![](https://jitpack.io/v/yizems/SavedDelegate.svg)](https://jitpack.io/#yizems/SavedDelegate)
+**jitpack 挂了,,,,,还没有上传mavenCentrl**
 
 还在傻傻的写 `onSaveInstanceState` 和 `onRestoreInstanceState` 方法么?
 

@@ -4,13 +4,13 @@ apply plugin: 'kotlin-android-extensions'
 apply plugin: 'com.google.devtools.ksp'
 
 android {
-    compileSdkVersion 29
+    compileSdkVersion 33
     buildToolsVersion "29.0.3"
 
     defaultConfig {
-        applicationId "cn.yzl.saved.delegate.simple"
-        minSdkVersion 21
-        targetSdkVersion 29
+        applicationId "cn.yzl.auto.save.simple"
+        minSdkVersion 23
+        targetSdkVersion 33
         versionCode 1
         versionName "1.0"
 
@@ -30,9 +30,10 @@ dependencies {
     implementation fileTree(dir: 'libs', include: ['*.jar'])
 
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
-    implementation 'androidx.appcompat:appcompat:1.1.0'
+    implementation 'androidx.appcompat:appcompat:1.4.1'
+    implementation 'com.google.android.material:material:1.6.0'
     implementation 'androidx.constraintlayout:constraintlayout:1.1.3'
-    implementation "org.jetbrains.kotlin:kotlin-reflect:$kotlin_version"
-    implementation project(path: ':savedelegate')
+    implementation project(path: ':core')
     ksp project(':ksp')
+    implementation project(":testlib")
 }

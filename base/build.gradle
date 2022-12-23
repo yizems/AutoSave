@@ -8,3 +8,8 @@ java {
     sourceCompatibility = JavaVersion.VERSION_1_7
     targetCompatibility = JavaVersion.VERSION_1_7
 }
+
+dependencies {
+    // https://mvnrepository.com/artifact/com.google.android/android
+    compileOnly 'com.google.android:android:4.1.1.4'
+}

@@ -31,8 +31,8 @@ classpath "com.google.devtools.ksp:symbol-processing-gradle-plugin:1.6.21-1.0.6"
 apply plugin: 'com.google.devtools.ksp'
 
 // dependencies 添加依赖
-implementation 'cn.yzl.auto.save:core:1.0.0'
-ksp 'cn.yzl.auto.save:ksp:1.0.0'
+implementation 'com.github.yizems.AutoSaveRestore:core:1.0.0'
+ksp 'com.github.yizems.AutoSaveRestore:ksp:1.0.0'
 ```
 
 - kotlin

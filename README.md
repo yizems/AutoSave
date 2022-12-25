@@ -2,7 +2,8 @@
 
 ## 项目描述
 
-**jitpack 挂了,,,,,还没有上传mavenCentrl**
+[![](https://jitpack.io/v/yizems/AutoSaveRestore.svg)](https://jitpack.io/#yizems/AutoSaveRestore)
+
 
 还在傻傻的写 `onSaveInstanceState` 和 `onRestoreInstanceState` 方法么?
 
